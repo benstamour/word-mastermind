@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Word Mastermind</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<!-- Bootstrap CSS CDN -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+		
+		<!-- Fonts -->
+		<link href="https://fonts.googleapis.com/css2?family=Gugi&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Glass+Antiqua&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Mooli&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Raleway&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Cabin&display=swap" rel="stylesheet">
+				
+		<!-- For icons -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+		<!-- JQuery -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		
+		<!-- Vue.js -->
+		<script type="importmap">
+			{
+				"imports": {
+					"vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js"
+				}
+			}
+		</script>
+		
+		<!-- CSS -->
+        <link rel="stylesheet" href="css/main.css">
+		
+		<script>
+			let r = document.querySelector(':root');
+			r.style.setProperty('--score0', '#64d4de');
+			r.style.setProperty('--score1', '#c286eb');
+		</script>
+		
+		<script>
+			function alterColour(hex, change)
+			{
+				let r = parseInt(hex.slice(1,3), 16);
+				let g = parseInt(hex.slice(3,5), 16);
+				let b = parseInt(hex.slice(5), 16);
+				let colour = [r, g, b];
+				for(let c = 0; c < colour.length; c++)
+				{
+					colour[c] = Math.floor(Math.min(colour[c] * change, 255));
+					colour[c] = colour[c].toString(16).padStart(2, 0);
+				}
+				let alteredcolour = '#' + colour.join('');
+				return alteredcolour;
+			}
+			
+			let properties = ['colour1', 'colour2', 'guessedcolour', 'currowcolour', 'unguessedcolour', 'basecolour'];
+			
+			function updateColours(varname, basecolour, fontcolour = '', colourchange = 0.6, colourvars = true)
+			{
+				let r = document.querySelector(':root');
+				r.style.setProperty('--' + varname, basecolour);
+				if(colourvars)
+				{
+					r.style.setProperty('--' + varname + 'dark', alterColour(basecolour, colourchange));
+				}
+				if(fontcolour)
+				{
+					r.style.setProperty('--font' + varname, fontcolour);
+				}
+			}
+			
+			var curtheme = 0;
+			if(sessionStorage.getItem("theme") != null)
+			{
+				curtheme = sessionStorage.getItem("theme");
+			}
+			
+			const themes = [
+				[ // standard
+					['#cfb71d', 'white'],
+					['#10c47c', 'white'],
+					['#999999', 'white'],
+					['#f9f9f9', 'black'],
+					['#dddddd', ''],
+					['#ffffff', 'black'],
+					'Cabin',
+					0.6,
+					'Standard'
+				],
+				[ // galaxy
+					['#64d4de', 'white'],
+					['#c286eb', 'white'],
+					['#999999', 'white'],
+					['#f9f9f9', 'black'],
+					['#dddddd', ''],
+					['#000000', 'white'],
+					'Gugi',
+					0.6,
+					'Galaxy'
+				],
+				[ // chalkboard
+					['#595959', 'white'],
+					['#707070', 'white'],
+					['#555555', 'white'],
+					['#000000', 'white'],
+					['#555555', ''],
+					['#000000', 'white'],
+					'Fredericka the Great',
+					0.6,
+					'Chalkboard'
+				],
+				[ // regal
+					['#f2efbf', 'black'],
+					['#bff0f2', 'black'],
+					['#d8e3e3', 'black'],
+					['#f2f7f7', 'black'],
+					['#abb8b8', ''],
+					['#ffffff', 'black'],
+					'Glass Antiqua',
+					0.8,
+					'Regal'
+				],
+				[ // watermelon
+					['#db3964', 'white'],
+					['#39db67', 'white'],
+					['#ebfff0', 'black'],
+					['#ffffff', 'black'],
+					['#ebfff0', ''],
+					['#ffffff', 'black'],
+					'Mochiy Pop One',
+					0.8,
+					'Watermelon'
+				],
+				[ // castle
+					['#b3951e', 'white'],
+					['#b31e2f', 'white'], //1e57b3
+					['#999999', 'black'],
+					['#ffffff', 'black'],
+					['#dddddd', ''],
+					['#000000', 'white'],
+					'Uncial Antiqua',
+					0.8,
+					'Castle'
+				]
+			];
+			
+			function setTheme(theme)
+			{
+				sessionStorage.setItem("theme", theme);
+			
+				let r = document.querySelector(':root');
+				const themevars = themes[theme];
+				
+				for(let i = 0; i < properties.length; i++)
+				{
+					updateColours(properties[i], themevars[i][0], themevars[i][1], themevars[7]);
+					//r.style.setProperty(properties[i], themevars[i]);
+				}
+				r.style.setProperty('--accentfont', themevars[6]);
+				
+				let mode;
+				if(themevars[5][1] === "black")
+				{
+					mode = "light";
+				}
+				else
+				{
+					mode = "dark";
+				}
+				document.getElementById("settingsModal").setAttribute("data-bs-theme", mode);
+				document.getElementById("infoModal").setAttribute("data-bs-theme", mode);
+			}
+		</script>
+	</head>
+	
+	<body>
+		<div class="header">
+			<div style="flex-basis: 50%;">
+				<a class="iconlink" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">
+					<i class="fa-solid fa-gear fa-xl"></i>
+				</a>
+				<a class="iconlink" style="margin-right: 15px" href="#" data-bs-toggle="modal" data-bs-target="#infoModal">
+					<i class="fa-regular fa-circle-question fa-xl"></i>
+				</a>
+			</div>
+			<div class="heading m-3" style="text-align: center">
+				Word Mastermind
+			</div>
+			<div style="flex-basis: 50%;"></div>
+		</div>
+		
+		<div class="modal fade settingsmodal" id="settingsModal" tabindex="-1" role="dialog" data-bs-theme="dark" aria-labelledby="settingsModalLabel" aria-hidden="true">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="settingsModalLabel"><b>Settings</b></h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						Select a theme below:
+						<div id="themeselection">
+							<!--<div>
+								<input type="radio" id="colour0" name="colourscheme" style="accent-color: #cfb71d" onclick="setTheme(0)" />
+								<label for="colour0" class="px-3 py-1" style="background-color: #10c47c; color: white; font-family: Cabin; border-radius: 5px; margin-left: 15px">Standard</label>
+							</div>
+							<div>
+								<input type="radio" id="colour1" name="colourscheme" style="accent-color: #64d4de" onclick="setTheme(1)" />
+								<label for="colour1" class="px-3 py-1 mt-1" style="background-color: #c286eb; color: white; font-family: Gugi; border-radius: 5px; margin-left: 15px">Galaxy</label>
+							</div>
+							<div>
+								<input type="radio" id="colour2" name="colourscheme" style="accent-color: #595959" onclick="setTheme(2)" />
+								<label for="colour2" class="px-3 py-1 mt-1" style="background-color: #707070; color: white; font-family: Fredericka the Great; border-radius: 5px; margin-left: 15px">Chalkboard</label>
+							</div>
+							<div>
+								<input type="radio" id="colour3" name="colourscheme" style="accent-color: #f2efbf" onclick="setTheme(3)" />
+								<label for="colour3" class="px-3 py-1 mt-1" style="background-color: #bff0f2; color: black; font-family: Glass Antiqua; border-radius: 5px; margin-left: 15px">Regal</label>
+							</div>
+							<div>
+								<input type="radio" id="colour4" name="colourscheme" style="accent-color: #db3964" onclick="setTheme(4)" />
+								<label for="colour4" class="px-3 py-1 mt-1" style="background-color: #39db67; color: black; font-family: Mochiy Pop One; border-radius: 5px; margin-left: 15px">Watermelon</label>
+							</div>
+							<div>
+								<input type="radio" id="colour5" name="colourscheme" style="accent-color: #b3951e" onclick="setTheme(5)" />
+								<label for="colour5" class="px-3 py-1 mt-1" style="background-color: #b31e2f; color: white; font-family: Uncial Antiqua; border-radius: 5px; margin-left: 15px">Castle</label>
+							</div>-->
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="modal fade infomodal" id="infoModal" tabindex="-1" role="dialog" data-bs-theme="dark" aria-labelledby="infoModalLabel" aria-hidden="true">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="infoModalLabel"><b>How to Play</b></h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						Guess the secret word! After each guess, you'll get feedback on how close your guess was to the word.
+						<br /><br />
+						<div style="text-align: center">
+							<div class="sampleletter">C</div>
+							<div class="sampleletter">Y</div>
+							<div class="sampleletter">A</div>
+							<div class="sampleletter">N</div>
+							<div class="sampleletter samplescore0">2</div>
+							<div class="sampleletter samplescore1">1</div>
+						</div>
+						<br />
+						Next to your guess, two numbers will appear. The first number tells you how many letters from your guess appear in the word but are in the <b>wrong spot</b>, while the second number tells you how many letters from your guess are in the <b>correct spot</b>.<br /><br />
+						In this example, the user's guess was <b>CYAN</b>, and the numbers next to it indicate that 2 letters in CYAN appear in the word but in a different spot than in the guess, and 1 letter in CYAN appears in the same spot in the word. This means that there are a total of 3 letters in CYAN that appear somewhere in the word!
+					</div>
+				</div>
+			</div>
+		</div>
+	
+		<div style="text-align: center"><div id="app"></div></div>
+		
+		<script type="module">
+			import { createApp } from 'vue';
+			import app from './js/app.js';
+			createApp(app).mount('#app');
+		</script>
+		
+		<script>
+			for(let i = 0; i < themes.length; i++)
+			{
+				let theme = themes[i];
+				let inp = document.createElement('input');
+				inp.type = 'radio';
+				inp.id = "colour" + i;
+				inp.name = "colourscheme";
+				inp.style.accentColor = theme[0][0];
+				inp.onclick = function() { setTheme(i); };
+				if(i == curtheme)
+				{
+					inp.checked = true;
+				}
+				
+				let label = document.createElement('label');
+				label.htmlFor = inp.id;
+				label.classList.add("px-3", "py-1", "mt-1");
+				label.style.backgroundColor = theme[1][0];
+				label.style.color = theme[1][1];
+				label.style.fontFamily = theme[6];
+				label.style.borderRadius = "5px";
+				label.style.marginLeft = "15px";
+				label.innerText = theme[8];
+				
+				let div = document.createElement('div');
+				
+				let themeselection = document.getElementById("themeselection");
+				div.appendChild(inp);
+				div.appendChild(label);
+				themeselection.appendChild(div);
+			}
+			
+			setTheme(curtheme);
+			//document.getElementById("colour" + curtheme).checked = true;
+			
+			$('.iconlink').on('keydown', function(e)
+			{
+				if(e.which === 13)
+				{
+					e.preventDefault();
+				}
+			});
+		</script>
+		
+		<!-- Bootstrap JavaScript CDN -->
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+	</body>
+</html>
